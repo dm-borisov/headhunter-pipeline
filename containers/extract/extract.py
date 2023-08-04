@@ -1,5 +1,6 @@
 import requests
 import jsonlines
+from time import sleep
 from typing import Generator
 
 
@@ -21,7 +22,7 @@ def get_page(url: str, headers: dict = None, params: dict = None) -> dict:
     JSON-like dict of the page's data
     """
 
-    page = requests.get(url, headers=headers, params=params)
+    page = requests.get(url, params=params)
     return page.json()
 
 
@@ -81,5 +82,17 @@ def get_data(url: str, params: dict, path: str, key: str = None):
             sleep(0.5)
 
 
-if __name__ == '__main__':
-    get_data(URL, params, 'extracted.jsonl')
+if __name__ == "__main__":
+    URL = 'https://api.hh.ru/vacancies'
+    QUERY = 'Name:(data engineer OR machine learning OR data science)'
+    WAIT = 1.0
+
+    params = {
+        'text': QUERY,
+        'date_from': '2023-07-29',
+        'date_to': '2023-07-29',
+        'per_page': 100,
+        'page': 0
+    }
+    
+    get_data(URL, params, "file.jsonl")

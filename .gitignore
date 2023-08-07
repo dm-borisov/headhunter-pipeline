@@ -1,2 +1,5 @@
 venv
+.env
 *_test.py
+logs
+__pycache__

@@ -103,7 +103,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - .:/docker-entrypoint-initdb.d
+      - ./db-init:/docker-entrypoint-initdb.d
       - headhunter-db-volume:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]

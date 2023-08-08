@@ -94,6 +94,26 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  data-postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - .:/docker-entrypoint-initdb.d
+      - headhunter-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+
+
   postgres:
     image: postgres:13
     environment:
@@ -305,3 +325,4 @@ services:
 
 volumes:
   postgres-db-volume:
+  headhunter-db-volume:

@@ -37,4 +37,22 @@ with DAG(
         network_mode="bridge"
     )
 
-    extract_data
+    transform_data = DockerOperator(
+        task_id="transform_data",
+        image="example2",
+        api_version="auto",
+        auto_remove=True,
+        command="python transform.py",
+        docker_url="tcp://docker-proxy:2375",
+        mount_tmp_dir=False,
+        mounts = [
+            Mount(
+                source="hh-pipeline-data",
+                target="/app/data",
+                type="volume")
+        ],
+        network_mode="bridge"       
+    )
+
+
+    extract_data >> transform_data

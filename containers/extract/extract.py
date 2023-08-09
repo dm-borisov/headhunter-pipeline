@@ -5,8 +5,8 @@ from time import sleep
 from typing import Generator
 
 
-URL = 'https://api.hh.ru/vacancies'
-PATH = 'data/extracted.jsonl'
+URL: str = 'https://api.hh.ru/vacancies'
+PATH: str = 'data/extracted.jsonl'
 
 
 def get_page(url: str, headers: dict = None, params: dict = None) -> dict:

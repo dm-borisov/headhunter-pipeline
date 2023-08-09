@@ -4,6 +4,7 @@ import jsonlines
 from time import sleep
 from typing import Generator
 from random import uniform
+from fake_useragent import UserAgent
 
 
 URL: str = 'https://api.hh.ru/vacancies'
@@ -12,7 +13,7 @@ MIN_WAIT: float = 0.5  # values less than that get captcha
 MAX_WAIT: float = 1.0
 
 
-def get_page(url: str, headers: dict = None, params: dict = None) -> dict:
+def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
     """
     Return json of the requested page
 
@@ -30,7 +31,8 @@ def get_page(url: str, headers: dict = None, params: dict = None) -> dict:
     JSON-like dict of the page's data
     """
 
-    page = requests.get(url, params=params)
+    page = requests.get(url, params=params, headers=headers)
+    print(page.request.headers)
     return page.json()
 
 
@@ -55,17 +57,18 @@ def get_urls(url: str, params: dict,
     URL for the certain page
     """
 
-    num_of_pages = int(get_page(url, params=params)['pages'])
+    num_of_pages = int(get_page(url, params, headers)['pages'])
     for page_num in range(num_of_pages):
         params['page'] = page_num
 
-        for item in get_page(url, params)['items']:
+        for item in get_page(url, params, headers)['items']:
             yield item['url'] if key is None else item[key]['url']
 
         sleep(uniform(MIN_WAIT, MAX_WAIT))
 
 
-def get_data(url: str, params: dict, path: str, key: str = None):
+def get_data(url: str, params: dict, headers: dict,
+             path: str, key: str = None):
     """
     Write data into jsonlike-file
 
@@ -84,8 +87,8 @@ def get_data(url: str, params: dict, path: str, key: str = None):
     """
 
     with jsonlines.open(path, mode='w') as writer:
-        for url in get_urls(url, params, key):
-            writer.write(get_page(url))
+        for url in get_urls(url, params, headers, key):
+            writer.write(get_page(url, headers=headers))
             print(f'GET VACANCY FROM {url}')
             sleep(uniform(MIN_WAIT, MAX_WAIT))
 
@@ -104,4 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--page", type=int, default=0, help="page number")
     params = vars(parser.parse_args())
 
-    get_data(URL, params, PATH)
+    ua = UserAgent()
+    headers = {"User-Agent": ua.random}
+
+    get_data(URL, params, headers, PATH)

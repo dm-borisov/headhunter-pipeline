@@ -1,13 +1,18 @@
+import argparse
 import requests
 import jsonlines
 from time import sleep
 from typing import Generator
 
 
+URL = 'https://api.hh.ru/vacancies'
+PATH = 'data/extracted.jsonl'
+
+
 def get_page(url: str, headers: dict = None, params: dict = None) -> dict:
     """
     Return json of the requested page
-    
+
     Parameters
     ----------
     url: str
@@ -16,7 +21,7 @@ def get_page(url: str, headers: dict = None, params: dict = None) -> dict:
         optional headers for the request
     params: dict
         optional request's parameters, like query, date_from, etc
-    
+
     Returns
     -------
     JSON-like dict of the page's data
@@ -30,7 +35,7 @@ def get_urls(url: str, params: dict,
              headers: dict, key: str = None) -> Generator[str, None, None]:
     """
     Yield url from requested pages
-    
+
     Parameters
     ----------
     url: str
@@ -44,7 +49,7 @@ def get_urls(url: str, params: dict,
 
     Returns
     -------
-    URL for the certain page 
+    URL for the certain page
     """
 
     num_of_pages = int(get_page(url, params=params)['pages'])
@@ -83,16 +88,17 @@ def get_data(url: str, params: dict, path: str, key: str = None):
 
 
 if __name__ == "__main__":
-    URL = 'https://api.hh.ru/vacancies'
-    QUERY = 'Name:(data engineer OR machine learning OR data science)'
-    WAIT = 1.0
+    parser = argparse.ArgumentParser(
+        prog="Extractor",
+        description="Pull data from hh-api into .jsonl files",
+    )
+    parser.add_argument("text", help="search query")
+    parser.add_argument("date_from", help="start date in YYYY-MM-DD format")
+    parser.add_argument("date_to", help="end data in YYYY-MM-DD format")
+    parser.add_argument("experience", help="experience search key")
+    parser.add_argument("--per_page", type=int, default=100,
+                        help="objects for page")
+    parser.add_argument("--page", type=int, default=0, help="page number")
+    params = vars(parser.parse_args())
 
-    params = {
-        'text': QUERY,
-        'date_from': '2023-07-29',
-        'date_to': '2023-07-29',
-        'per_page': 100,
-        'page': 0
-    }
-    
-    get_data(URL, params, "file.jsonl")
+    get_data(URL, params, PATH)

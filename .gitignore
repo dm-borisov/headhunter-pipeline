@@ -3,3 +3,4 @@ venv
 *_test.py
 logs
 __pycache__
+.vscode

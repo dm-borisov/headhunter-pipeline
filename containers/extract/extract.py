@@ -1,6 +1,7 @@
 import argparse
 import requests
 import jsonlines
+import logging
 from time import sleep
 from typing import Generator
 from random import uniform
@@ -11,6 +12,9 @@ URL: str = 'https://api.hh.ru/vacancies'
 PATH: str = 'data/extracted.jsonl'
 MIN_WAIT: float = 0.5  # values less than that get captcha
 MAX_WAIT: float = 1.0
+
+FORMAT: str = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
+logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
 def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
@@ -32,7 +36,9 @@ def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
     """
 
     page = requests.get(url, params=params, headers=headers)
-    print(page.request.headers)
+    logging.info(f"get info from {url}")
+    sleep(uniform(MIN_WAIT, MAX_WAIT))
+
     return page.json()
 
 
@@ -64,8 +70,6 @@ def get_urls(url: str, params: dict,
         for item in get_page(url, params, headers)['items']:
             yield item['url'] if key is None else item[key]['url']
 
-        sleep(uniform(MIN_WAIT, MAX_WAIT))
-
 
 def get_data(url: str, params: dict, headers: dict,
              path: str, key: str = None):
@@ -89,8 +93,6 @@ def get_data(url: str, params: dict, headers: dict,
     with jsonlines.open(path, mode='w') as writer:
         for url in get_urls(url, params, headers, key):
             writer.write(get_page(url, headers=headers))
-            print(f'GET VACANCY FROM {url}')
-            sleep(uniform(MIN_WAIT, MAX_WAIT))
 
 
 if __name__ == "__main__":

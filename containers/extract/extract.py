@@ -8,16 +8,17 @@ from random import uniform
 from fake_useragent import UserAgent
 
 
-URL: str = 'https://api.hh.ru/vacancies'
-PATH: str = 'data/extracted.jsonl'
-MIN_WAIT: float = 0.5  # values less than that get captcha
-MAX_WAIT: float = 1.0
+URL = 'https://api.hh.ru/vacancies'
+PATH = 'data/extracted.jsonl'
+MIN_WAIT = 0.5  # values less than that get captcha
+MAX_WAIT = 1.0
 
-FORMAT: str = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
+FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
-def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
+def get_page(url: str, params: dict | None = None,
+             headers: dict | None = None) -> dict:
     """
     Return json of the requested page
 
@@ -36,8 +37,7 @@ def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
     """
 
     try:
-        page: requests.Response = requests.get(url, params=params,
-                                               headers=headers)
+        page = requests.get(url, params=params, headers=headers)
         page.raise_for_status()
         logging.info(f"get data from {url}")
         sleep(uniform(MIN_WAIT, MAX_WAIT))
@@ -48,8 +48,8 @@ def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
     return page.json()
 
 
-def get_urls(url: str, params: dict,
-             headers: dict, key: str = None) -> Generator[str, None, None]:
+def get_urls(url: str, params: dict, headers: dict,
+             key: str | None = None) -> Generator[str, None, None]:
     """
     Yield url from requested pages
 
@@ -69,7 +69,7 @@ def get_urls(url: str, params: dict,
     URL for the certain page
     """
 
-    num_of_pages: int = int(get_page(url, params, headers)['pages'])
+    num_of_pages = int(get_page(url, params, headers)['pages'])
     for page_num in range(num_of_pages):
         params['page'] = page_num
 
@@ -78,7 +78,7 @@ def get_urls(url: str, params: dict,
 
 
 def get_data(url: str, params: dict, headers: dict,
-             path: str, key: str = None):
+             path: str, key: str | None = None):
     """
     Write data into jsonlike-file
 

@@ -35,9 +35,15 @@ def get_page(url: str, params: dict = None, headers: dict = None) -> dict:
     JSON-like dict of the page's data
     """
 
-    page = requests.get(url, params=params, headers=headers)
-    logging.info(f"get info from {url}")
-    sleep(uniform(MIN_WAIT, MAX_WAIT))
+    try:
+        page: requests.Response = requests.get(url, params=params,
+                                               headers=headers)
+        page.raise_for_status()
+        logging.info(f"get data from {url}")
+        sleep(uniform(MIN_WAIT, MAX_WAIT))
+    except requests.exceptions.HTTPError as e:  # Check for 404 and 403 errors
+        logging.error(e)
+        raise SystemExit()
 
     return page.json()
 
@@ -63,7 +69,7 @@ def get_urls(url: str, params: dict,
     URL for the certain page
     """
 
-    num_of_pages = int(get_page(url, params, headers)['pages'])
+    num_of_pages: int = int(get_page(url, params, headers)['pages'])
     for page_num in range(num_of_pages):
         params['page'] = page_num
 

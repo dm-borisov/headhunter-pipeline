@@ -1,7 +1,8 @@
 import jsonlines
+import logging
 from data_fields import vacancy_keys2
 from flatten_json import flatten
-from sqlalchemy import insert, select
+from sqlalchemy import insert
 from sqlalchemy.schema import Table
 from sqlalchemy.engine import Engine
 from models import engine, skills_table, vacancies_table
@@ -10,6 +11,9 @@ from functools import wraps
 
 
 PATH = "extracted.jsonl"
+
+FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
+logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
 class Transformer:
@@ -66,6 +70,8 @@ class Transformer:
                         conn.execute(insert(self.__table), data)
                         conn.commit()
 
+                logging.info(f"writing data to {self.__table} is completed")
+
         return wrapper
 
 
@@ -108,15 +114,4 @@ def process_skills(obj: dict):
 if __name__ == "__main__":
 
     process_vacancies(vacancy_keys2)
-
-    with engine.connect() as conn:
-        stmt = select(skills_table)
-        for row in conn.execute(stmt):
-            print(row)
-
     process_skills()
-
-    with engine.connect() as conn:
-        stmt = select(vacancies_table)
-        for row in conn.execute(stmt):
-            print(row)

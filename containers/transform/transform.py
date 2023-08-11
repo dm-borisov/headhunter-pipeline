@@ -5,6 +5,9 @@ from sqlalchemy import insert, select
 from models import engine, skills_table, vacancies_table
 
 
+PATH = "data/extracted.jsonl"
+
+
 def write_to_db(extract_path: str, table_name: str, engine):
     def get_data(func):
         def wrapper(*args, **kwargs):
@@ -23,7 +26,7 @@ def write_to_db(extract_path: str, table_name: str, engine):
     return get_data
 
 
-@write_to_db("data/extracted2.jsonl", vacancies_table, engine)
+@write_to_db(PATH, vacancies_table, engine)
 def get_vacancies(obj: dict, keys: dict):
     flatten_obj = flatten(obj)
 
@@ -37,7 +40,7 @@ def get_vacancies(obj: dict, keys: dict):
     return vacancy
 
 
-@write_to_db("data/extracted2.jsonl", skills_table, engine)
+@write_to_db(PATH, skills_table, engine)
 def get_skills(obj: dict):
     return [{'id': obj['id'], 'skill': skill['name']}
             for skill in obj['key_skills']]

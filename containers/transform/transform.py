@@ -10,7 +10,7 @@ from typing import Callable
 from functools import wraps
 
 
-PATH = "extracted.jsonl"
+PATH = "data/extracted.jsonl"
 
 FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
@@ -68,7 +68,7 @@ class Transformer:
                     data: dict = func(obj, *args, **kwargs)
                     if data:
                         conn.execute(insert(self.__table), data)
-                        # conn.commit()
+                        conn.commit()
 
                 logging.info(f"writing data to {self.__table} is completed")
 
@@ -104,12 +104,32 @@ def process_fields(obj: dict, keys: list) -> dict:
 
 
 @Transformer(PATH, skills_table, engine)
-def process_skills(obj: dict):
-    return [{'id': obj['id'], 'skill': skill['name']}
-            for skill in obj['key_skills']]
+def process_nested_field(obj: dict, field: str, sub_field: str,
+                         name: str) -> list:
+    """
+    Create a list of dictionarties from dictionary-like field
+    from head-hunter file
+
+    Parameters
+    ----------
+    obj: dict
+        An item's dictionary retrieved from head-hunter api
+    field: str
+        A dictionary like field with necessary values
+    sub_field: str
+        A key that contain value
+    name: str
+        A name of table column
+
+    Return
+    ------
+    A list of dictionaries to insert into sql table
+    """
+
+    return [{"id": obj["id"], name: item[sub_field]} for item in obj[field]]
 
 
 if __name__ == "__main__":
 
     process_fields(vacancy_keys2)
-    process_skills()
+    process_nested_field("key_skills", "name", "skill")

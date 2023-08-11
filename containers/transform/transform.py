@@ -68,7 +68,7 @@ class Transformer:
                     data: dict = func(obj, *args, **kwargs)
                     if data:
                         conn.execute(insert(self.__table), data)
-                        conn.commit()
+                        # conn.commit()
 
                 logging.info(f"writing data to {self.__table} is completed")
 
@@ -76,7 +76,7 @@ class Transformer:
 
 
 @Transformer(PATH, vacancies_table, engine)
-def process_vacancies(obj: dict, keys: list) -> dict:
+def process_fields(obj: dict, keys: list) -> dict:
     """
     Retrieve necessary fields from object
 
@@ -95,14 +95,12 @@ def process_vacancies(obj: dict, keys: list) -> dict:
     # Flatten nested dictionary to easily retrieve fields
     flatten_obj = flatten(obj)
 
-    vacancy = {}
+    items = dict.fromkeys(keys)
     for key in keys:
         if key in flatten_obj.keys():
-            vacancy[key] = flatten_obj[key]
-        else:
-            vacancy[key] = None
+            items[key] = flatten_obj[key]
 
-    return vacancy
+    return items
 
 
 @Transformer(PATH, skills_table, engine)
@@ -113,5 +111,5 @@ def process_skills(obj: dict):
 
 if __name__ == "__main__":
 
-    process_vacancies(vacancy_keys2)
+    process_fields(vacancy_keys2)
     process_skills()

@@ -52,3 +52,10 @@ industries_talbe = Table(
 path = "postgresql+psycopg2://postgres:postgres@172.17.0.1/postgres"
 engine = create_engine(path)
 metadata_obj.create_all(engine)
+
+tables = {
+    "vacancies_tmp": vacancies_table,
+    "skills_tmp": skills_table,
+    "companies_tmp": companies_table,
+    "industries_tmp": industries_talbe
+}

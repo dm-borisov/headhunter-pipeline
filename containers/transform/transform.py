@@ -1,11 +1,12 @@
 import jsonlines
 import logging
-from data_fields import vacancy_keys2
+import argparse
+from exceptions import FlagError
 from flatten_json import flatten
 from sqlalchemy import insert
 from sqlalchemy.schema import Table
 from sqlalchemy.engine import Engine
-from tables import engine, skills_table, vacancies_table
+from tables import engine, tables
 from typing import Generator
 
 
@@ -74,7 +75,7 @@ class DBWriterMixin:
         logging.info(f"writing data to {self.__table} is completed")
 
 
-class TableProcesser(JsonlReaderMixin, DBWriterMixin):
+class TableProcessor(JsonlReaderMixin, DBWriterMixin):
     """
     A class that processes extracted data as a table
 
@@ -134,7 +135,7 @@ class TableProcesser(JsonlReaderMixin, DBWriterMixin):
             yield items
 
 
-class AttributeProcesser(JsonlReaderMixin, DBWriterMixin):
+class AttributeProcessor(JsonlReaderMixin, DBWriterMixin):
     """
     A class that takes nested data and ids from extracted file,
     and yields a dictionary with them as a database row
@@ -196,9 +197,49 @@ class AttributeProcesser(JsonlReaderMixin, DBWriterMixin):
 
 
 if __name__ == "__main__":
-    vacancies = TableProcesser(vacancy_keys2, PATH, vacancies_table, engine)
-    vacancies.write_data()
+    parser = argparse.ArgumentParser(
+        prog="Transformer",
+        description="Transforms extracted data and write it to db",
+    )
+    parser.add_argument("method", choices=["table", "attribute"],
+                        help="Choose write full table or id-attribute table")
+    parser.add_argument("table_name",
+                        help="Name of the database table")
+    parser.add_argument("-l", "--list", action="extend", nargs="+",
+                        help="A list of keys for full table")
+    parser.add_argument("-k", "--key",
+                        help="A nested data key for id-attribute table")
+    parser.add_argument("-s", "--skey",
+                        help="A sub-key for id-attribute table")
+    parser.add_argument("-a", "--attribute",
+                        help="An attribute name of id-attribute table")
+    params = vars(parser.parse_args())
 
-    skills = AttributeProcesser("key_skills", "name", "skill",
-                                PATH, skills_table, engine)
-    skills.write_data()
+    if params["table_name"] not in tables.keys():
+        raise FlagError("Such table is not exist.")
+
+    if params["method"] == "table":
+        if params["list"] is None:
+            raise FlagError("The list of keys is not provided.")
+        if not params["list"]:
+            raise FlagError("The list of keys is empty.")
+
+        processor = TableProcessor(
+            params["list"],
+            PATH,
+            tables[params["table_name"]],
+            engine)
+    elif params["method"] == "attribute":
+        for flag in ("key", "skey", "attribute"):
+            if params[flag] is None:
+                raise FlagError(f"Flag {flag} is not provided.")
+
+        processor = AttributeProcessor(
+            params["key"],
+            params["skey"],
+            params["attribute"],
+            PATH,
+            tables[params["table_name"]],
+            engine)
+
+    processor.write_data()

@@ -196,7 +196,9 @@ class AttributeProcessor(JsonlReaderMixin, DBWriterMixin):
                            self.__attribute_name: item[self.__sub_key]}
 
 
-if __name__ == "__main__":
+def parser_init() -> dict:
+    """Initializes cli parser."""
+
     parser = argparse.ArgumentParser(
         prog="Transformer",
         description="Transforms extracted data and write it to db",
@@ -213,16 +215,60 @@ if __name__ == "__main__":
                         help="A sub-key for id-attribute table")
     parser.add_argument("-a", "--attribute",
                         help="An attribute name of id-attribute table")
-    params = vars(parser.parse_args())
 
+    return vars(parser.parse_args())
+
+
+def validate_table_name(params: dict, tables: dict):
+    """
+    Raises error if table is not exists.
+
+    Parameters
+    ----------
+    params: dict
+        Parameters from cli
+    tables: dict
+        Dictionary of existing tables
+    """
     if params["table_name"] not in tables.keys():
         raise FlagError("Such table is not exist.")
 
+
+def validate_keys_list(params: dict):
+    """
+    Raises error if there is no list or list is empty.
+
+    Parameters
+    ----------
+    params: dict
+        Parameters from cli
+    """
+    if params["list"] is None:
+        raise FlagError("The list of keys is not provided.")
+    if not params["list"]:
+        raise FlagError("The list of keys is empty.")
+
+
+def validate_attribute_keys(params: dict):
+    """
+    Raises error if one of the keys is missing
+
+    Parameters
+    ----------
+    params: dict
+        Parameters from cli
+    """
+    for flag in ("key", "skey", "attribute"):
+        if params[flag] is None:
+            raise FlagError(f"Flag {flag} is not provided.")
+
+
+if __name__ == "__main__":
+    params = parser_init()
+
+    validate_table_name(params, tables)
     if params["method"] == "table":
-        if params["list"] is None:
-            raise FlagError("The list of keys is not provided.")
-        if not params["list"]:
-            raise FlagError("The list of keys is empty.")
+        validate_keys_list(params)
 
         processor = TableProcessor(
             params["list"],
@@ -230,9 +276,7 @@ if __name__ == "__main__":
             tables[params["table_name"]],
             engine)
     elif params["method"] == "attribute":
-        for flag in ("key", "skey", "attribute"):
-            if params[flag] is None:
-                raise FlagError(f"Flag {flag} is not provided.")
+        validate_attribute_keys(params)
 
         processor = AttributeProcessor(
             params["key"],

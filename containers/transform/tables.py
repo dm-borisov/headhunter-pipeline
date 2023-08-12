@@ -6,7 +6,7 @@ from sqlalchemy import Table, Column, String, Integer
 metadata_obj = MetaData()
 
 vacancies_table = Table(
-    "vacancies_load",
+    "vacancies_tmp",
     metadata_obj,
     Column("id", Integer),
     Column("name", String),
@@ -17,13 +17,12 @@ vacancies_table = Table(
 )
 
 skills_table = Table(
-    "skills_load",
+    "skills_tmp",
     metadata_obj,
     Column("id", Integer),
     Column("skill", String)
 )
 
-
-path = f"postgresql+psycopg2://postgres:postgres@172.17.0.1/postgres"
-engine = create_engine(path, echo=True)
+path = "postgresql+psycopg2://postgres:postgres@172.17.0.1/postgres"
+engine = create_engine(path)
 metadata_obj.create_all(engine)

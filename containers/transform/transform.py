@@ -10,7 +10,7 @@ from tables import engine, tables
 from typing import Generator
 
 
-PATH = "extracted.jsonl"
+PATH = "data/extracted.jsonl"
 
 FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
@@ -70,7 +70,7 @@ class DBWriterMixin:
         with self.__engine.connect() as conn:
             for item in self.process_data():
                 conn.execute(insert(self.__table), item)
-                # conn.commit()
+                conn.commit()
 
         logging.info(f"writing data to {self.__table} is completed")
 

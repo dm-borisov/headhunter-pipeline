@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS vacancies_load(
+CREATE TABLE IF NOT EXISTS vacancies_tmp(
     id                 INT,
     name               VARCHAR(50),
     area_id            INT,

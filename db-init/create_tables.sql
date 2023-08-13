@@ -35,5 +35,3 @@ CREATE TABLE IF NOT EXISTS industries_tmp(
     indsustry VARCHAR(100)
 
 );
-
-CREATE TABLE IN NOT EXISTS

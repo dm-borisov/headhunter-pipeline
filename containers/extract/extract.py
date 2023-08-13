@@ -113,6 +113,7 @@ if __name__ == "__main__":
     parser.add_argument("--per_page", type=int, default=100,
                         help="objects for page")
     parser.add_argument("--page", type=int, default=0, help="page number")
+    parser.add_argument("--key", help="an object's key to retrieve url")
     params = vars(parser.parse_args())
 
     ua = UserAgent()

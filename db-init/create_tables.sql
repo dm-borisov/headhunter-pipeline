@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS vacancies_tmp(
     id                 INT,
-    name               VARCHAR(50),
+    name               VARCHAR(100),
     area_id            INT,
     employer_id        INT,
     published_at       TIMESTAMP,
@@ -35,3 +35,5 @@ CREATE TABLE IF NOT EXISTS industries_tmp(
     indsustry VARCHAR(100)
 
 );
+
+CREATE TABLE IN NOT EXISTS

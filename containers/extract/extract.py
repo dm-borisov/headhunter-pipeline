@@ -9,7 +9,7 @@ from fake_useragent import UserAgent
 
 
 URL = 'https://api.hh.ru/vacancies'
-PATH = 'data/extracted.jsonl'
+PATH = 'data/'
 MIN_WAIT = 0.5  # values less than that get captcha
 MAX_WAIT = 1.0
 
@@ -114,12 +114,16 @@ if __name__ == "__main__":
                         help="objects for page")
     parser.add_argument("--page", type=int, default=0, help="page number")
     parser.add_argument("--key", help="an object's key to retrieve url")
+    parser.add_argument("--filename", help="name of file to store data",
+                        required=True)
 
     params = vars(parser.parse_args())
     key = params["key"]
+    full_path = PATH + params["filename"] + '.jsonl'
     del params["key"]
+    del params["filename"]
 
     ua = UserAgent()
     headers = {"User-Agent": ua.random}
 
-    get_data(URL, params, headers, PATH, key)
+    get_data(URL, params, headers, full_path, key)

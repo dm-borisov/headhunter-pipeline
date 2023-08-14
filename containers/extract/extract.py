@@ -114,9 +114,12 @@ if __name__ == "__main__":
                         help="objects for page")
     parser.add_argument("--page", type=int, default=0, help="page number")
     parser.add_argument("--key", help="an object's key to retrieve url")
+
     params = vars(parser.parse_args())
+    key = params["key"]
+    del params["key"]
 
     ua = UserAgent()
     headers = {"User-Agent": ua.random}
 
-    get_data(URL, params, headers, PATH)
+    get_data(URL, params, headers, PATH, key)

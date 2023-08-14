@@ -4,7 +4,7 @@ from processors import TableProcessor, AttributeProcessor
 from tables import engine, tables
 
 
-PATH = "data/extracted.jsonl"
+PATH = "data/"
 
 
 def parser_init() -> dict:
@@ -26,6 +26,8 @@ def parser_init() -> dict:
                         help="A sub-key for id-attribute table")
     parser.add_argument("-a", "--attribute",
                         help="An attribute name of id-attribute table")
+    parser.add_argument("-f", "--filename", required=True,
+                        help="name of file where data is stored")
 
     return vars(parser.parse_args())
 
@@ -83,7 +85,7 @@ if __name__ == "__main__":
 
         processor = TableProcessor(
             params["list"],
-            PATH,
+            PATH+params["filename"]+".jsonl",
             tables[params["table_name"]],
             engine)
     elif params["method"] == "attribute":
@@ -93,7 +95,7 @@ if __name__ == "__main__":
             params["key"],
             params["skey"],
             params["attribute"],
-            PATH,
+            PATH+params["filename"]+".jsonl",
             tables[params["table_name"]],
             engine)
 

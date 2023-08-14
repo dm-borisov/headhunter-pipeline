@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS companies_tmp(
 
 
 CREATE TABLE IF NOT EXISTS industries_tmp(
-    id        INT,
-    indsustry VARCHAR(100)
-
+    id           INT,
+    industry_id  VARCHAR(100)
 );

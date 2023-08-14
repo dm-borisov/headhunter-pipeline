@@ -66,7 +66,7 @@ with DAG(
         image="example2",
         api_version="auto",
         auto_remove=True,
-        command=f"attribute skills_tmp {keys} --filename companies",
+        command=f"attribute industries_tmp {keys} --filename companies",
         docker_url="tcp://docker-proxy:2375",
         mount_tmp_dir=False,
         mounts=[

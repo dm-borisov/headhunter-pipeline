@@ -46,7 +46,7 @@ industries_talbe = Table(
     "industries_tmp",
     metadata_obj,
     Column("id", Integer),
-    Column("industry", String)
+    Column("industry_id", String)
 )
 
 path = "postgresql+psycopg2://postgres:postgres@172.17.0.1/postgres"

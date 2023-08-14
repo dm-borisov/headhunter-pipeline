@@ -16,14 +16,15 @@ default_args = {
 }
 
 with DAG(
-    "docker_dag",
+    "companies_dag",
     default_args=default_args,
     schedule_interval="@daily") as dag:
 
     cmd = ('"Name:(data engineer OR data analyst)" '
-           '2023-08-08 2023-08-08 between3And6')
-    extract_data = DockerOperator(
-        task_id="extract_data",
+           '2023-08-08 2023-08-08 between3And6 '
+           '--key employer --filename companies')
+    extract_companies = DockerOperator(
+        task_id="extract_companies",
         image="example",
         api_version="auto",
         auto_remove=True,
@@ -40,15 +41,14 @@ with DAG(
     )
 
     columns = (
-        "id name area_id employer_id published_at "
-        "experience_id schedule_id professional_roles alternate_url "
-        "salary_from salary_to salary_currency salary_gross")
-    transform_vacancies = DockerOperator(
-        task_id="transform_vacancies",
+        "id accredited_it_employer name type area_id "
+        "site_url alternate_url")
+    transform_companies = DockerOperator(
+        task_id="transform_companies",
         image="example2",
         api_version="auto",
         auto_remove=True,
-        command=f"table vacancies_tmp -l {columns}",
+        command=f"table companies_tmp -l {columns} --filename companies",
         docker_url="tcp://docker-proxy:2375",
         mount_tmp_dir=False,
         mounts=[
@@ -60,13 +60,13 @@ with DAG(
         network_mode="bridge"
     )
 
-    keys = "-k key_skills -s name -a skill"
-    transform_skills = DockerOperator(
-        task_id="transform_skills",
+    keys = "-k industries -s id -a industry_id"
+    transform_industries = DockerOperator(
+        task_id="transform_industries",
         image="example2",
         api_version="auto",
         auto_remove=True,
-        command=f"attribute skills_tmp {keys}",
+        command=f"attribute skills_tmp {keys} --filename companies",
         docker_url="tcp://docker-proxy:2375",
         mount_tmp_dir=False,
         mounts=[
@@ -78,4 +78,4 @@ with DAG(
         network_mode="bridge"
     )
 
-    extract_data >> [transform_vacancies, transform_skills]
+    extract_companies >> [transform_companies, transform_industries]

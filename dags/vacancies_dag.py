@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.docker_operator import DockerOperator
+from airflow.operators.postgres_operator import PostgresOperator
+
 
 from datetime import timedelta
 from docker.types import Mount
@@ -78,4 +80,17 @@ with DAG(
         network_mode="bridge"
     )
 
-    extract_vacancies >> [transform_vacancies, transform_skills]
+    insert_vacancies = PostgresOperator(
+        task_id="insert_vacancies",
+        postgres_conn_id="hh-data",
+        sql="sql/insert_vacancies.sql"
+    )
+
+    insert_skills = PostgresOperator(
+        task_id="insert_skills",
+        postgres_conn_id="hh-data",
+        sql="sql/insert_skills.sql"
+    )
+
+    (extract_vacancies >> [transform_vacancies, transform_skills]
+     >> insert_vacancies >> insert_skills)

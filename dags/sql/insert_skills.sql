@@ -1,0 +1,14 @@
+INSERT INTO skills(skill)
+SELECT DISTINCT st.skill s
+  FROM skills_tmp st
+       LEFT JOIN skills s ON s.skill = st.skill
+ WHERE s.skill IS NULL;
+
+INSERT INTO vacancies_to_skills
+SELECT st.id,
+       s.id
+  FROM skills_tmp st 
+       INNER JOIN skills s ON s.skill = st.skill
+       LEFT JOIN vacancies_to_skills vts ON st.id = vts.vacancy_id
+                                            AND s.id = vts.skill_id      
+ WHERE vts.vacancy_id IS NULL

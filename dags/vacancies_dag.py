@@ -22,8 +22,20 @@ with DAG(
     default_args=default_args,
     schedule_interval="@daily") as dag:
 
+    create_vacancies_tmp_table = PostgresOperator(
+        task_id="create_vacancies_tmp_table",
+        postgres_conn_id="hh-data",
+        sql="sql/create_vacancies_tmp_table.sql"
+    )
+
+    create_skills_tmp_table = PostgresOperator(
+        task_id="create_skills_tmp_table",
+        postgres_conn_id="hh-data",
+        sql="sql/create_skills_tmp_table.sql"
+    )
+
     cmd = ('"Name:(data engineer OR data analyst)" '
-           '{{ ds }} {{ ds }} between3And6 --filename vacancies')
+           '{{ ds }} {{ ds }} between3And6 --filename vacancies-{{ ds }}')
     extract_vacancies = DockerOperator(
         task_id="extract_vacancies",
         image="example",
@@ -50,7 +62,7 @@ with DAG(
         image="example2",
         api_version="auto",
         auto_remove=True,
-        command=f"table vacancies_tmp -l {columns} --filename vacancies",
+        command="table vacancies_{{ ds_nodash }} "+f"-l {columns} "+"--filename vacancies-{{ ds }}",
         docker_url="tcp://docker-proxy:2375",
         mount_tmp_dir=False,
         mounts=[
@@ -68,7 +80,7 @@ with DAG(
         image="example2",
         api_version="auto",
         auto_remove=True,
-        command=f"attribute skills_tmp {keys} --filename vacancies",
+        command="attribute skills_{{ ds_nodash }} "+f"{keys} "+"--filename " +"vacancies-{{ ds }}",
         docker_url="tcp://docker-proxy:2375",
         mount_tmp_dir=False,
         mounts=[
@@ -92,18 +104,22 @@ with DAG(
         sql="sql/insert_skills.sql"
     )
 
-    truncate_vacancies_tmp = PostgresOperator(
-        task_id="truncate_vacancies_tmp",
+    drop_vacancies_tmp = PostgresOperator(
+        task_id="drop_vacancies_tmp",
         postgres_conn_id="hh-data",
-        sql="sql/truncate_tmp_vacancies.sql"
+        sql="sql/drop_tmp_vacancies.sql"
     )
 
-    truncate_skills_tmp = PostgresOperator(
-        task_id="truncate_skills_tmp",
+    drop_skills_tmp = PostgresOperator(
+        task_id="drop_skills_tmp",
         postgres_conn_id="hh-data",
-        sql="sql/truncate_tmp_skill.sql"
+        sql="sql/drop_tmp_skill.sql"
     )
 
-    (extract_vacancies >> [transform_vacancies, transform_skills]
+    ([create_skills_tmp_table, create_vacancies_tmp_table] >>
+     extract_vacancies >> [transform_vacancies, transform_skills]
      >> insert_vacancies >> insert_skills >>
-     [truncate_vacancies_tmp, truncate_skills_tmp])
+     [drop_vacancies_tmp, drop_skills_tmp])
+
+    create_skills_tmp_table
+    create_vacancies_tmp_table

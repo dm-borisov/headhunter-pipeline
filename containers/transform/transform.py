@@ -1,7 +1,7 @@
 import argparse
 from exceptions import FlagError
 from processors import TableProcessor, AttributeProcessor
-from tables import engine, tables
+from tables import engine, get_table
 
 
 PATH = "data/"
@@ -30,21 +30,6 @@ def parser_init() -> dict:
                         help="name of file where data is stored")
 
     return vars(parser.parse_args())
-
-
-def validate_table_name(params: dict, tables: dict):
-    """
-    Raises error if table is not exists.
-
-    Parameters
-    ----------
-    params: dict
-        Parameters from cli
-    tables: dict
-        Dictionary of existing tables
-    """
-    if params["table_name"] not in tables.keys():
-        raise FlagError("Such table is not exist.")
 
 
 def validate_keys_list(params: dict):
@@ -79,14 +64,14 @@ def validate_attribute_keys(params: dict):
 if __name__ == "__main__":
     params = parser_init()
 
-    validate_table_name(params, tables)
+    table = get_table(params["table_name"])
     if params["method"] == "table":
         validate_keys_list(params)
 
         processor = TableProcessor(
             params["list"],
             PATH+params["filename"]+".jsonl",
-            tables[params["table_name"]],
+            table,
             engine)
     elif params["method"] == "attribute":
         validate_attribute_keys(params)
@@ -96,7 +81,7 @@ if __name__ == "__main__":
             params["skey"],
             params["attribute"],
             PATH+params["filename"]+".jsonl",
-            tables[params["table_name"]],
+            table,
             engine)
 
     processor.write_data()

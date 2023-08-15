@@ -23,7 +23,7 @@ with DAG(
     schedule_interval="@daily") as dag:
 
     cmd = ('"Name:(data engineer OR data analyst)" '
-           '2023-08-08 2023-08-08 between3And6 --filename vacancies')
+           '{{ ds }} {{ ds }} between3And6 --filename vacancies')
     extract_vacancies = DockerOperator(
         task_id="extract_vacancies",
         image="example",

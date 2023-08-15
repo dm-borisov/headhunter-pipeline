@@ -92,5 +92,18 @@ with DAG(
         sql="sql/insert_skills.sql"
     )
 
+    truncate_vacancies_tmp = PostgresOperator(
+        task_id="truncate_vacancies_tmp",
+        postgres_conn_id="hh-data",
+        sql="sql/truncate_tmp_vacancies.sql"
+    )
+
+    truncate_skills_tmp = PostgresOperator(
+        task_id="truncate_skills_tmp",
+        postgres_conn_id="hh-data",
+        sql="sql/truncate_tmp_skill.sql"
+    )
+
     (extract_vacancies >> [transform_vacancies, transform_skills]
-     >> insert_vacancies >> insert_skills)
+     >> insert_vacancies >> insert_skills >>
+     [truncate_vacancies_tmp, truncate_skills_tmp])

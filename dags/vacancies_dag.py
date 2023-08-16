@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.utils.dates import days_ago
+from airflow.utils.task_group import TaskGroup
 from airflow.operators.docker_operator import DockerOperator
 from airflow.operators.postgres_operator import PostgresOperator
 
@@ -7,6 +8,13 @@ from airflow.operators.postgres_operator import PostgresOperator
 from datetime import timedelta
 from docker.types import Mount
 
+
+experience_tags = [
+    "noExperience",
+    "between1And3",
+    "between3And6",
+    "moreThan6"
+]
 
 default_args = {
     "owner": "airflow",
@@ -34,24 +42,31 @@ with DAG(
         sql="sql/create_skills_tmp_table.sql"
     )
 
-    cmd = ('"Name:(data engineer OR data analyst)" '
-           '{{ ds }} {{ ds }} between3And6 --filename vacancies-{{ ds }}')
-    extract_vacancies = DockerOperator(
-        task_id="extract_vacancies",
-        image="example",
-        api_version="auto",
-        auto_remove=True,
-        command=cmd,
-        docker_url="tcp://docker-proxy:2375",
-        mount_tmp_dir=False,
-        mounts=[
-            Mount(
-                source="hh-pipeline-data",
-                target="/app/data",
-                type="volume")
-        ],
-        network_mode="bridge"
-    )
+    with TaskGroup(group_id="extract_group") as extract_tg:
+        a = []
+        for i, experience in enumerate(experience_tags):
+            cmd = (
+                '"Name:(data engineer OR data analyst)" '
+                '{{ ds }} {{ ds }} '+experience+' --filename vacancies-{{ ds }}'
+            )
+            a.append(DockerOperator(
+                task_id="extract_vacancies_"+experience,
+                image="example",
+                api_version="auto",
+                auto_remove=True,
+                command=cmd,
+                docker_url="tcp://docker-proxy:2375",
+                mount_tmp_dir=False,
+                mounts=[
+                    Mount(
+                        source="hh-pipeline-data",
+                        target="/app/data",
+                        type="volume")
+                ],
+                network_mode="bridge"
+            ))
+            if i != 0:
+                a[i-1] >> a[i]
 
     columns = (
         "id name area_id employer_id published_at "
@@ -134,7 +149,7 @@ with DAG(
     )
 
     ([create_skills_tmp_table, create_vacancies_tmp_table] >>
-     extract_vacancies >> [transform_vacancies, transform_skills]
+     extract_tg >> [transform_vacancies, transform_skills]
      >> insert_vacancies >> insert_skills >>
      [drop_vacancies_tmp, drop_skills_tmp] >> clean_volume)
 

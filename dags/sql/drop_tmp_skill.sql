@@ -1,1 +1,1 @@
-DROP TABLE skills_tmp;
+DROP TABLE skills_{{ ds_nodash }};

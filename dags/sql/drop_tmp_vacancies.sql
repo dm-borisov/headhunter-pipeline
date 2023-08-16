@@ -1,1 +1,1 @@
-DROP TABLE vacancies_tmp;
+DROP TABLE vacancies_{{ ds_nodash }};

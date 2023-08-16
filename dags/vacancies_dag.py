@@ -1,26 +1,18 @@
 from airflow import DAG
-from airflow.utils.dates import days_ago
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.docker_operator import DockerOperator
 from airflow.operators.postgres_operator import PostgresOperator
 
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from docker.types import Mount
 
 
-experience_tags = [
-    "noExperience",
-    "between1And3",
-    "between3And6",
-    "moreThan6"
-]
-
 default_args = {
     "owner": "airflow",
-    "description": "extract data from hh",
+    "description": "ETL process for headhunter api data (vacancies)",
     "depend_on_past": False,
-    "start_date": days_ago(1),
+    "start_date": datetime(2023, 8, 16),
     "retries": 1,
     "retry_delay": timedelta(minutes=5)
 }
@@ -44,13 +36,28 @@ with DAG(
         )
 
     with TaskGroup(group_id="extract") as extract_tg:
-        a = []
+        experience_tags = (
+            "noExperience",
+            "between1And3",
+            "between3And6",
+            "moreThan6"
+        )
+
+        key_words = (
+            "data analyst",
+            "data engineer",
+            "data scientist",
+            "machine learning"
+        )
+
+        tasks = []
         for experience in experience_tags:
             cmd = (
-                '"Name:(data engineer OR data analyst)" '
-                '{{ ds }} {{ ds }} '+experience+' --filename vacancies-{{ ds }}'
+                f'"Name:({" OR ".join(key_words)})" ' +
+                '{{ ds }} {{ ds }} ' + experience +
+                ' --filename vacancies-{{ ds }}'
             )
-            a.append(DockerOperator(
+            tasks.append(DockerOperator(
                 task_id="extract_vacancies_"+experience,
                 image="example",
                 api_version="auto",
@@ -69,16 +76,31 @@ with DAG(
             ))
 
     with TaskGroup(group_id="transform") as transform_tg:
-        columns = (
-            "id name area_id employer_id published_at "
-            "experience_id schedule_id professional_roles alternate_url "
-            "salary_from salary_to salary_currency salary_gross")
+        columns = " ".join((
+            "id",
+            "name",
+            "area_id",
+            "employer_id",
+            "published_at",
+            "experience_id",
+            "schedule_id",
+            "professional_roles",
+            "alternate_url",
+            "salary_from",
+            "salary_to",
+            "salary_currency",
+            "salary_gross"
+        ))
+        cmd = (
+            "table vacancies_{{ ds_nodash }} -l " + columns +
+            " --filename vacancies-{{ ds }}"
+        )
         transform_vacancies = DockerOperator(
             task_id="transform_vacancies",
             image="example2",
             api_version="auto",
             auto_remove=True,
-            command="table vacancies_{{ ds_nodash }} "+f"-l {columns} "+"--filename vacancies-{{ ds }}",
+            command=cmd,
             docker_url="tcp://docker-proxy:2375",
             mount_tmp_dir=False,
             mounts=[
@@ -90,13 +112,16 @@ with DAG(
             network_mode="bridge"
         )
 
-        keys = "-k key_skills -s name -a skill"
+        cmd = (
+            "attribute skills_{{ ds_nodash }} -k key_skills -s name "
+            "-a skill --filename vacancies-{{ ds }}"
+        )
         transform_skills = DockerOperator(
             task_id="transform_skills",
             image="example2",
             api_version="auto",
             auto_remove=True,
-            command="attribute skills_{{ ds_nodash }} "+f"{keys} "+"--filename "+"vacancies-{{ ds }}",
+            command=cmd,
             docker_url="tcp://docker-proxy:2375",
             mount_tmp_dir=False,
             mounts=[

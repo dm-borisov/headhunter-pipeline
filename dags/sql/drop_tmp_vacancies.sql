@@ -1,1 +1,1 @@
-DROP TABLE vacancies_{{ ds_nodash }};
+DROP TABLE IF EXISTS vacancies_{{ ds_nodash }};

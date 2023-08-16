@@ -1,1 +1,1 @@
-DROP TABLE skills_{{ ds_nodash }};
+DROP TABLE IF EXISTS skills_{{ ds_nodash }};

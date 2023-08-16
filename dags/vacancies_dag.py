@@ -30,21 +30,22 @@ with DAG(
     default_args=default_args,
     schedule_interval="@daily") as dag:
 
-    create_vacancies_tmp_table = PostgresOperator(
-        task_id="create_vacancies_tmp_table",
-        postgres_conn_id="hh-data",
-        sql="sql/create_vacancies_tmp_table.sql"
-    )
+    with TaskGroup(group_id="create") as create_tg:
+        create_vacancies_tmp_table = PostgresOperator(
+            task_id="create_vacancies_tmp_table",
+            postgres_conn_id="hh-data",
+            sql="sql/create_vacancies_tmp_table.sql"
+        )
 
-    create_skills_tmp_table = PostgresOperator(
-        task_id="create_skills_tmp_table",
-        postgres_conn_id="hh-data",
-        sql="sql/create_skills_tmp_table.sql"
-    )
+        create_skills_tmp_table = PostgresOperator(
+            task_id="create_skills_tmp_table",
+            postgres_conn_id="hh-data",
+            sql="sql/create_skills_tmp_table.sql"
+        )
 
-    with TaskGroup(group_id="extract_group") as extract_tg:
+    with TaskGroup(group_id="extract") as extract_tg:
         a = []
-        for i, experience in enumerate(experience_tags):
+        for experience in experience_tags:
             cmd = (
                 '"Name:(data engineer OR data analyst)" '
                 '{{ ds }} {{ ds }} '+experience+' --filename vacancies-{{ ds }}'
@@ -63,95 +64,93 @@ with DAG(
                         target="/app/data",
                         type="volume")
                 ],
-                network_mode="bridge"
+                network_mode="bridge",
+                pool="sequential"
             ))
-            if i != 0:
-                a[i-1] >> a[i]
 
-    columns = (
-        "id name area_id employer_id published_at "
-        "experience_id schedule_id professional_roles alternate_url "
-        "salary_from salary_to salary_currency salary_gross")
-    transform_vacancies = DockerOperator(
-        task_id="transform_vacancies",
-        image="example2",
-        api_version="auto",
-        auto_remove=True,
-        command="table vacancies_{{ ds_nodash }} "+f"-l {columns} "+"--filename vacancies-{{ ds }}",
-        docker_url="tcp://docker-proxy:2375",
-        mount_tmp_dir=False,
-        mounts=[
-            Mount(
-                source="hh-pipeline-data",
-                target="/app/data",
-                type="volume")
-        ],
-        network_mode="bridge"
-    )
+    with TaskGroup(group_id="transform") as transform_tg:
+        columns = (
+            "id name area_id employer_id published_at "
+            "experience_id schedule_id professional_roles alternate_url "
+            "salary_from salary_to salary_currency salary_gross")
+        transform_vacancies = DockerOperator(
+            task_id="transform_vacancies",
+            image="example2",
+            api_version="auto",
+            auto_remove=True,
+            command="table vacancies_{{ ds_nodash }} "+f"-l {columns} "+"--filename vacancies-{{ ds }}",
+            docker_url="tcp://docker-proxy:2375",
+            mount_tmp_dir=False,
+            mounts=[
+                Mount(
+                    source="hh-pipeline-data",
+                    target="/app/data",
+                    type="volume")
+            ],
+            network_mode="bridge"
+        )
 
-    keys = "-k key_skills -s name -a skill"
-    transform_skills = DockerOperator(
-        task_id="transform_skills",
-        image="example2",
-        api_version="auto",
-        auto_remove=True,
-        command="attribute skills_{{ ds_nodash }} "+f"{keys} "+"--filename "+"vacancies-{{ ds }}",
-        docker_url="tcp://docker-proxy:2375",
-        mount_tmp_dir=False,
-        mounts=[
-            Mount(
-                source="hh-pipeline-data",
-                target="/app/data",
-                type="volume")
-        ],
-        network_mode="bridge"
-    )
+        keys = "-k key_skills -s name -a skill"
+        transform_skills = DockerOperator(
+            task_id="transform_skills",
+            image="example2",
+            api_version="auto",
+            auto_remove=True,
+            command="attribute skills_{{ ds_nodash }} "+f"{keys} "+"--filename "+"vacancies-{{ ds }}",
+            docker_url="tcp://docker-proxy:2375",
+            mount_tmp_dir=False,
+            mounts=[
+                Mount(
+                    source="hh-pipeline-data",
+                    target="/app/data",
+                    type="volume")
+            ],
+            network_mode="bridge"
+        )
 
-    insert_vacancies = PostgresOperator(
-        task_id="insert_vacancies",
-        postgres_conn_id="hh-data",
-        sql="sql/insert_vacancies.sql"
-    )
+    with TaskGroup(group_id="load") as load_tg:
+        insert_vacancies = PostgresOperator(
+            task_id="insert_vacancies",
+            postgres_conn_id="hh-data",
+            sql="sql/insert_vacancies.sql"
+        )
 
-    insert_skills = PostgresOperator(
-        task_id="insert_skills",
-        postgres_conn_id="hh-data",
-        sql="sql/insert_skills.sql"
-    )
+        insert_skills = PostgresOperator(
+            task_id="insert_skills",
+            postgres_conn_id="hh-data",
+            sql="sql/insert_skills.sql"
+        )
 
-    drop_vacancies_tmp = PostgresOperator(
-        task_id="drop_vacancies_tmp",
-        postgres_conn_id="hh-data",
-        sql="sql/drop_tmp_vacancies.sql"
-    )
+        insert_vacancies >> insert_skills
 
-    drop_skills_tmp = PostgresOperator(
-        task_id="drop_skills_tmp",
-        postgres_conn_id="hh-data",
-        sql="sql/drop_tmp_skill.sql"
-    )
+    with TaskGroup(group_id="clean") as clean_tg:
+        drop_vacancies_tmp = PostgresOperator(
+            task_id="drop_vacancies_tmp",
+            postgres_conn_id="hh-data",
+            sql="sql/drop_tmp_vacancies.sql"
+        )
 
-    clean_volume = DockerOperator(
-        task_id="clean_volume",
-        image="debian:stable-slim",
-        api_version="auto",
-        auto_remove=True,
-        command="/bin/bash -c 'rm ./data/vacancies-{{ ds }}.jsonl'",
-        docker_url="tcp://docker-proxy:2375",
-        mount_tmp_dir=False,
-        mounts=[
-            Mount(
-                source="hh-pipeline-data",
-                target="/data",
-                type="volume")
-        ],
-        network_mode="bridge"
-    )
+        drop_skills_tmp = PostgresOperator(
+            task_id="drop_skills_tmp",
+            postgres_conn_id="hh-data",
+            sql="sql/drop_tmp_skill.sql"
+        )
 
-    ([create_skills_tmp_table, create_vacancies_tmp_table] >>
-     extract_tg >> [transform_vacancies, transform_skills]
-     >> insert_vacancies >> insert_skills >>
-     [drop_vacancies_tmp, drop_skills_tmp] >> clean_volume)
+        clean_volume = DockerOperator(
+            task_id="clean_volume",
+            image="debian:stable-slim",
+            api_version="auto",
+            auto_remove=True,
+            command="/bin/bash -c 'rm ./data/vacancies-{{ ds }}.jsonl'",
+            docker_url="tcp://docker-proxy:2375",
+            mount_tmp_dir=False,
+            mounts=[
+                Mount(
+                    source="hh-pipeline-data",
+                    target="/data",
+                    type="volume")
+            ],
+            network_mode="bridge"
+        )
 
-    create_skills_tmp_table
-    create_vacancies_tmp_table
+    create_tg >> extract_tg >> transform_tg >> load_tg >> clean_tg

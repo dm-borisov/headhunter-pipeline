@@ -92,6 +92,6 @@ def get_data(url: str, params: dict, headers: dict,
         optioal key for retrieving from nested data
     """
 
-    with jsonlines.open(path, mode='w') as writer:
+    with jsonlines.open(path, mode='a') as writer:
         for url in get_urls(url, params, headers, key):
             writer.write(get_page(url, headers=headers))

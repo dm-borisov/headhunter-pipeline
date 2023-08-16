@@ -80,7 +80,7 @@ with DAG(
         image="example2",
         api_version="auto",
         auto_remove=True,
-        command="attribute skills_{{ ds_nodash }} "+f"{keys} "+"--filename " +"vacancies-{{ ds }}",
+        command="attribute skills_{{ ds_nodash }} "+f"{keys} "+"--filename "+"vacancies-{{ ds }}",
         docker_url="tcp://docker-proxy:2375",
         mount_tmp_dir=False,
         mounts=[
@@ -116,10 +116,27 @@ with DAG(
         sql="sql/drop_tmp_skill.sql"
     )
 
+    clean_volume = DockerOperator(
+        task_id="clean_volume",
+        image="debian:stable-slim",
+        api_version="auto",
+        auto_remove=True,
+        command="/bin/bash -c 'rm ./data/vacancies-{{ ds }}.jsonl'",
+        docker_url="tcp://docker-proxy:2375",
+        mount_tmp_dir=False,
+        mounts=[
+            Mount(
+                source="hh-pipeline-data",
+                target="/data",
+                type="volume")
+        ],
+        network_mode="bridge"
+    )
+
     ([create_skills_tmp_table, create_vacancies_tmp_table] >>
      extract_vacancies >> [transform_vacancies, transform_skills]
      >> insert_vacancies >> insert_skills >>
-     [drop_vacancies_tmp, drop_skills_tmp])
+     [drop_vacancies_tmp, drop_skills_tmp] >> clean_volume)
 
     create_skills_tmp_table
     create_vacancies_tmp_table

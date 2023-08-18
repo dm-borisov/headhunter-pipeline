@@ -6,7 +6,7 @@ from sqlalchemy.engine import Engine
 from typing import Generator
 
 
-FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
+FORMAT = "{%(filename)s} %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 

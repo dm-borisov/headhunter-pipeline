@@ -5,7 +5,7 @@ SELECT DISTINCT st.skill s
  WHERE s.skill IS NULL;
 
 INSERT INTO vacancies_to_skills
-SELECT st.id,
+SELECT DISTINCT st.id,
        s.id
   FROM skills_{{ ds_nodash }} st 
        INNER JOIN skills s ON s.skill = st.skill

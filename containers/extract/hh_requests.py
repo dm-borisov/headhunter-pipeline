@@ -9,14 +9,14 @@ from random import uniform
 MIN_WAIT = 0.5  # values less than that get captcha
 MAX_WAIT = 1.0
 
-FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
+FORMAT = "{%(filename)s} %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 
 def get_page(url: str, params: dict | None = None,
              headers: dict | None = None) -> dict:
     """
-    Return json of the requested page
+    Returns json of the requested page
 
     Parameters
     ----------
@@ -47,7 +47,7 @@ def get_page(url: str, params: dict | None = None,
 def get_urls(url: str, params: dict, headers: dict,
              key: str | None = None) -> Generator[str, None, None]:
     """
-    Yield url from requested pages
+    Yields url from requested pages
 
     Parameters
     ----------
@@ -60,9 +60,9 @@ def get_urls(url: str, params: dict, headers: dict,
     key: str
         optioal key for retrieving from nested data
 
-    Returns
+    Yields
     -------
-    URL for the certain page
+    URL of the certain page
     """
 
     num_of_pages = int(get_page(url, params, headers)['pages'])
@@ -76,7 +76,7 @@ def get_urls(url: str, params: dict, headers: dict,
 def get_data(url: str, params: dict, headers: dict,
              path: str, key: str | None = None):
     """
-    Write data into jsonlike-file
+    Writes data into jsonlike-file
 
     Parameters
     ----------

@@ -4,6 +4,13 @@ from sqlalchemy import insert
 from sqlalchemy.schema import Table
 from sqlalchemy.engine import Engine
 from tables import get_table, engine
+from fake_useragent import UserAgent
+from time import sleep
+from random import uniform
+
+
+MIN_WAIT = 0.5  # values less than that get captcha
+MAX_WAIT = 1.0
 
 
 FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
@@ -33,6 +40,7 @@ def get_page(url: str, params: dict | None = None,
         page = requests.get(url, params=params, headers=headers)
         page.raise_for_status()
         logging.info(f"get data from {url}")
+        sleep(uniform(MIN_WAIT, MAX_WAIT))
     except requests.exceptions.HTTPError as e:  # Check for 404 and 403 errors
         logging.error(e)
         raise SystemExit()
@@ -118,15 +126,15 @@ def write_to_db(data: list, table: Table, engine: Engine):
 
 
 if __name__ == "__main__":
+    ua = UserAgent()
+    headers = {"User-Agent": ua.random}
+
     areas = get_table("areas")
-    industries = get_table("industries")
-
-    data = get_page("https://api.hh.ru/areas")
-
+    data = get_page("https://api.hh.ru/areas", headers=headers)
     areas_data = get_areas(data)
     write_to_db(areas_data, areas, engine)
 
-    data = get_page("https://api.hh.ru/industries")
-
+    industries = get_table("industries")
+    data = get_page("https://api.hh.ru/industries", headers=headers)
     industries_data = get_industries(data)
     write_to_db(industries_data, industries, engine)

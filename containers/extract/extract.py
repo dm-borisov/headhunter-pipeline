@@ -1,6 +1,6 @@
 import argparse
 from fake_useragent import UserAgent
-from hh_requests import get_data
+from utils import get_data
 
 
 URL = 'https://api.hh.ru/vacancies'

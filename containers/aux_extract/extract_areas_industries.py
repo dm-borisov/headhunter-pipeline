@@ -13,7 +13,7 @@ MIN_WAIT = 0.5  # values less than that get captcha
 MAX_WAIT = 1.0
 
 
-FORMAT = "[%(asctime)s] {%(filename)s} %(levelname)s %(message)s"
+FORMAT = "{%(filename)s} %(levelname)s %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.INFO)
 
 

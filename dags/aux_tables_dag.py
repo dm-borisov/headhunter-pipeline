@@ -5,17 +5,16 @@ from datetime import datetime, timedelta
 
 default_args = {
     "owner": "airflow",
-    "description": "ETL process for headhunter api data (vacancies)",
+    "description": "Creates auxiliary tables",
     "depend_on_past": False,
     "start_date": datetime(2023, 8, 16),
     "retries": 1,
     "retry_delay": timedelta(minutes=5)
 }
 
-with DAG(
-    "aux_tables_dag",
-    default_args=default_args,
-    schedule_interval="@once") as dag:
+with DAG("aux_tables_dag",
+         default_args=default_args,
+         schedule_interval="@once") as dag:
 
     load_aux_tables = DockerOperator(
         task_id="load_aux_tables",

@@ -17,10 +17,9 @@ default_args = {
     "retry_delay": timedelta(minutes=5)
 }
 
-with DAG(
-    "companies_dag",
-    default_args=default_args,
-    schedule_interval="@daily") as dag:
+with DAG("companies_dag",
+         default_args=default_args,
+         schedule_interval="@daily") as dag:
 
     with TaskGroup(group_id="create") as create_tg:
         create_companies_tmp_table = PostgresOperator(

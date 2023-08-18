@@ -2,6 +2,7 @@ FROM python:3.10-slim
 
 WORKDIR ./app
 COPY requirements.txt \
+     .env \
      extract_schedule_experience.py \
      extract_areas_industries.py \
      tables.py \

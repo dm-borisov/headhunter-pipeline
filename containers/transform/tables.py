@@ -6,16 +6,18 @@ from sqlalchemy import Table
 PATH = "postgresql+psycopg2://postgres:postgres@172.17.0.1/postgres"
 
 
-def get_table(table_name):
+def get_table(table_name) -> Table:
     """
-    Connects to temporary table
+    Returns a specified table
 
     Parameters
     ----------
     table_name: str
-        Name of temporary table
-    prefix: str
-        Prefix of temporary table
+        Name of a table
+
+    Returns
+    -------
+        A specified table
     """
     metadata_obj = MetaData()
     return Table(

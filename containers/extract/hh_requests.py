@@ -94,6 +94,4 @@ def get_data(url: str, params: dict, headers: dict,
 
     with jsonlines.open(path, mode='a') as writer:
         for url in get_urls(url, params, headers, key):
-            data = get_page(url, headers=headers)
-            del data["branded_description"]
-            writer.write(data)
+            writer.write(get_page(url, headers=headers))

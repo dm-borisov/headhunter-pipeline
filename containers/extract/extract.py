@@ -34,6 +34,7 @@ if __name__ == "__main__":
 
     key = params["key"]
     full_path = PATH + params["filename"] + '.jsonl'
+    # Delete key and filename fields to leave parameters for query only
     del params["key"]
     del params["filename"]
 

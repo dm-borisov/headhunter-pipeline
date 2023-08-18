@@ -59,7 +59,7 @@ with DAG("companies_dag",
 
             tasks.append(DockerOperator(
                 task_id="extract_companies_"+experience,
-                image="example",
+                image="dmborisov/headhunter-pipeline:extract",
                 api_version="auto",
                 auto_remove=True,
                 command=cmd,
@@ -93,7 +93,7 @@ with DAG("companies_dag",
         )
         transform_companies = DockerOperator(
             task_id="transform_companies",
-            image="example2",
+            image="dmborisov/headhunter-pipeline:transform",
             api_version="auto",
             auto_remove=True,
             command=cmd,
@@ -115,7 +115,7 @@ with DAG("companies_dag",
         keys = "-k industries -s id -a industry_id"
         transform_industries = DockerOperator(
             task_id="transform_industries",
-            image="example2",
+            image="dmborisov/headhunter-pipeline:transform",
             api_version="auto",
             auto_remove=True,
             command=cmd,

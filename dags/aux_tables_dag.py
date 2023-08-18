@@ -18,7 +18,7 @@ with DAG("aux_tables_dag",
 
     load_aux_tables = DockerOperator(
         task_id="load_aux_tables",
-        image="example3",
+        image="dmborisov/headhunter-pipeline:auxiliary-extract",
         api_version="auto",
         auto_remove=True,
         command="",

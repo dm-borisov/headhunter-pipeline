@@ -58,7 +58,7 @@ with DAG("vacancies_dag",
             )
             tasks.append(DockerOperator(
                 task_id="extract_vacancies_"+experience,
-                image="example",
+                image="dmborisov/headhunter-pipeline:extract",
                 api_version="auto",
                 auto_remove=True,
                 command=cmd,
@@ -96,7 +96,7 @@ with DAG("vacancies_dag",
         )
         transform_vacancies = DockerOperator(
             task_id="transform_vacancies",
-            image="example2",
+            image="dmborisov/headhunter-pipeline:transform",
             api_version="auto",
             auto_remove=True,
             command=cmd,
@@ -117,7 +117,7 @@ with DAG("vacancies_dag",
         )
         transform_skills = DockerOperator(
             task_id="transform_skills",
-            image="example2",
+            image="dmborisov/headhunter-pipeline:transform",
             api_version="auto",
             auto_remove=True,
             command=cmd,

@@ -152,13 +152,13 @@ with DAG(
         drop_vacancies_tmp = PostgresOperator(
             task_id="drop_vacancies_tmp",
             postgres_conn_id="hh-data",
-            sql="sql/drop_tmp_vacancies.sql"
+            sql="sql/drop_vacancies_tmp.sql"
         )
 
         drop_skills_tmp = PostgresOperator(
             task_id="drop_skills_tmp",
             postgres_conn_id="hh-data",
-            sql="sql/drop_tmp_skill.sql"
+            sql="sql/drop_skills_tmp.sql"
         )
 
         clean_volume = DockerOperator(

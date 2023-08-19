@@ -6,10 +6,10 @@ x-airflow-common:
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_META_USER:-airflow}:${POSTGRES_META_PASSWORD:-airflow}@postgres/${POSTGRES_META_DB:-airflow}
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     # For backward compatibility, with Airflow <2.3
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_META_USER:-airflow}:${POSTGRES_META_PASSWORD:-airflow}@postgres/${POSTGRES_META_DB:-airflow}
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://${POSTGRES_META_USER:-airflow}:${POSTGRES_META_PASSWORD:-airflow}@postgres/${POSTGRES_META_DB:-airflow}
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
@@ -43,9 +43,9 @@ services:
   data-postgres:
     image: postgres:13
     environment:
-      POSTGRES_USER: ${POSTGRES_DATA_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_DATA_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DATA_DB:-postgres}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
@@ -61,9 +61,9 @@ services:
   postgres:
     image: postgres:13
     environment:
-      POSTGRES_USER: ${POSTGRES_META_USER:-airflow}
-      POSTGRES_PASSWORD: ${POSTGRES_META_PASSWORD:-airflow}
-      POSTGRES_DB: ${POSTGRES_META_PASSWORD:-airflow}
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
     healthcheck:
@@ -270,6 +270,7 @@ services:
 networks:
   default:
     name: headhunter-pipeline-network
+    driver: bridge
 
 volumes:
   postgres-db-volume:

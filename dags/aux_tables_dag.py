@@ -14,7 +14,8 @@ default_args = {
 
 with DAG("aux_tables_dag",
          default_args=default_args,
-         schedule_interval="@once") as dag:
+         schedule_interval="@once",
+         catchup=False) as dag:
 
     load_aux_tables = DockerOperator(
         task_id="load_aux_tables",

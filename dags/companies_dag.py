@@ -19,7 +19,8 @@ default_args = {
 
 with DAG("companies_dag",
          default_args=default_args,
-         schedule_interval="@daily") as dag:
+         schedule_interval="@daily",
+         catchup=False) as dag:
 
     with TaskGroup(group_id="create") as create_tg:
         create_companies_tmp_table = PostgresOperator(

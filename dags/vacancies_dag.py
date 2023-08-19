@@ -2,7 +2,7 @@ from airflow import DAG
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.docker_operator import DockerOperator
 from airflow.operators.postgres_operator import PostgresOperator
-
+from airflow.sensors.external_task_sensor import ExternalTaskSensor
 
 from datetime import datetime, timedelta
 from docker.types import Mount
@@ -19,7 +19,15 @@ default_args = {
 
 with DAG("vacancies_dag",
          default_args=default_args,
-         schedule_interval="@daily") as dag:
+         schedule_interval="@daily",
+         catchup=False) as dag:
+
+    wait_for_companies_dag = ExternalTaskSensor(
+        task_id="wait_for_companies_dag",
+        external_dag_id="companies_dag",
+        poke_interval=60*2,
+        timeout=60*20,
+    )
 
     with TaskGroup(group_id="create") as create_tg:
         create_vacancies_tmp_table = PostgresOperator(
@@ -177,4 +185,5 @@ with DAG("vacancies_dag",
             network_mode="bridge"
         )
 
-    create_tg >> extract_tg >> transform_tg >> load_tg >> clean_tg
+    (wait_for_companies_dag >> create_tg >>
+     extract_tg >> transform_tg >> load_tg >> clean_tg)

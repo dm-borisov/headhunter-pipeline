@@ -20,6 +20,7 @@ default_args = {
 with DAG("vacancies_dag",
          default_args=default_args,
          schedule_interval="@daily",
+         max_active_runs=1,
          catchup=False) as dag:
 
     wait_for_companies_dag = ExternalTaskSensor(

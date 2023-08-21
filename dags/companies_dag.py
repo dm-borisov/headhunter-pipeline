@@ -20,6 +20,7 @@ default_args = {
 with DAG("companies_dag",
          default_args=default_args,
          schedule_interval="@daily",
+         max_active_runs=1,
          catchup=False) as dag:
 
     with TaskGroup(group_id="create") as create_tg:

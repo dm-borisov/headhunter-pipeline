@@ -38,28 +38,38 @@ docker compose up
 ![image](https://github.com/dm-borisov/headhunter-pipeline/assets/141336932/557ba05a-2212-4b36-b09c-ba4a530e3fa0)
 
 ## :gear: How it works
-It's a standard ETL process. Extract and transform are written in `python` and are wrapped in Docker containers. Load phase is written in `sql`.
 
-In my case, there are three dags:
-1. `aux_tables_dag` downloads next auxiliary tables: areas, industries, experience, schedule
-2. `companies_dag` is an ETL process for companies that published vacancies yesterday
-3. `vacacnies_dag` is an ETL process for yesterday vacancies
+1. Brief description
+3. Schema
+4. Dags explanation and restictions
+5. Explanation of each steps
 
-Due to dependencies it's necessary to run `aux_tables_dag` before activating other dags. Also `companies_dag` should be run before `vacancies_dag`. Here's the project database schema (made in [dbdiagram](https://dbdiagram.io/d)):
+It's an ETL process. Data is extracted from the Head-Hunter API, transformed by python script and loaded into the `PostgreSQL` database.
+
+The database schema looks like this (made in [dbdiagram](https://dbdiagram.io/d)):
 ![image](https://github.com/dm-borisov/headhunter-pipeline/assets/141336932/d9c9c374-fbfd-4848-976c-7b9ff8a49a62)
 
-The whole process takes time because of API restriction. You can easily get Captcha if you try to load with minimal delays or in parallel. To implement restrictions I did:
-1. API delay to between 0.5 to 1 minute in extract script
-2. Restrict dag's run to 1
-3. Make `vacancies_dag` run only after `companies_dag` completed (also tables dependencies is also a reason)
+There are three dags to populate it:
+1. `aux_tables_dag` downloads next auxiliary tables: areas, industries, experience, schedule. It should be run first, because other tables are dependent on them
+2. `companies_dag` is an ETL process that populates the next tables: companies, companies_to_industries
+3. `vacancies_dag` is an ETL process that populates the remaining tables: vacancies, skills, vacancies_to_skills. Because of dependencies, it should run after `companies dag`
 
-Here's `companies_dag` graph:
+Both `companies_dag` and `vacancies_dag` can only have one `dag_instance` running at one time. If there is more `dag_instances`, then you can overwhelm the API and get Captcha.
+ 
+Here's the `companies_dag` graph:
 ![image](https://github.com/dm-borisov/headhunter-pipeline/assets/141336932/5513aa51-822f-4889-960c-079ec78cf9ca)
 
-And `vacancies_dag` graph here:
+And the `vacancies_dag` graph here:
 ![image](https://github.com/dm-borisov/headhunter-pipeline/assets/141336932/98171735-8ac7-4a9f-9028-cd5ee11ba385)
 
-They have similar steps besides `wait_for_companies_dag` sensor. Vacancies table are dependent on Companies tables, so it's necessary to load data in latter one first.
+They have similar steps besides the `wait_for_companies_dag` sensor. The vacancy table is dependent on the company table, so it's necessary to load data into the latter one first.
+
+There are five steps that consist of multiple tasks grouped by TaskGroups:
+1. Create. This step creates temporary tables for transformed data using `S 
+2. Extract.
+3. Transform.
+4. Load.
+5. Clean.
 
 The whole process is made of 5 steps represented by TaskGroups:
 1. Create. In this step temporary tables for transformed data are created.

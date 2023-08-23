@@ -1,7 +1,7 @@
 # :bulb: headhunter-pipeline
 
 ## :page_facing_up: Description
-The main purpose of this project is to help with data gathering from a head-hunter API for further analysis. The extracted data can be used in different ways:
+The main purpose of this project is to help with data gathering from a Head-Hunter API for further analysis. The extracted data can be used in different ways:
 - job searching;
 - finding tendencies in the job market;
 - finding insights for specific jobs that are not mentioned in public reports;
@@ -38,12 +38,6 @@ docker compose up
 ![image](https://github.com/dm-borisov/headhunter-pipeline/assets/141336932/557ba05a-2212-4b36-b09c-ba4a530e3fa0)
 
 ## :gear: How it works
-
-1. Brief description
-3. Schema
-4. Dags explanation and restictions
-5. Explanation of each steps
-
 It's an ETL process. Data is extracted from the Head-Hunter API, transformed by python script and loaded into the `PostgreSQL` database.
 
 The database schema looks like this (made in [dbdiagram](https://dbdiagram.io/d)):
@@ -54,7 +48,7 @@ There are three dags to populate it:
 2. `companies_dag` is an ETL process that populates the next tables: companies, companies_to_industries
 3. `vacancies_dag` is an ETL process that populates the remaining tables: vacancies, skills, vacancies_to_skills. Because of dependencies, it should run after `companies dag`
 
-Both `companies_dag` and `vacancies_dag` can only have one `dag_instance` running at one time. If there is more `dag_instances`, then you can overwhelm the API and get Captcha.
+Both `companies_dag` and `vacancies_dag` can only have one `dag_instance` running at a time. If there is more `dag_instances`, then you can overwhelm the API and get Captcha.
  
 Here's the `companies_dag` graph:
 ![image](https://github.com/dm-borisov/headhunter-pipeline/assets/141336932/5513aa51-822f-4889-960c-079ec78cf9ca)
@@ -65,15 +59,8 @@ And the `vacancies_dag` graph here:
 They have similar steps besides the `wait_for_companies_dag` sensor. The vacancy table is dependent on the company table, so it's necessary to load data into the latter one first.
 
 There are five steps that consist of multiple tasks grouped by TaskGroups:
-1. Create. This step creates temporary tables for transformed data using `S 
-2. Extract.
-3. Transform.
-4. Load.
-5. Clean.
-
-The whole process is made of 5 steps represented by TaskGroups:
-1. Create. In this step temporary tables for transformed data are created.
-2. Extract. In this step the data are extracted from headhunter-api. To get around limit of 2000 items per query, I divided one query into three by different experience. You can also do it by using different queries or areas. The data are stored in jsonlines-file.
-4. Transform. In this step the data from jsonlines-file are transformed and stored into temporary tables.
-5. Load. In this step the data are inserted in main tables. Duplicates inside temporary table (for example, companies can occur multiple times) and between temporary table and main table are checked.
-6. Clean. This is the final step where jsonfiles and temporary tables are deleted.
+1. Create. This step creates temporary tables for transformed data by using `PostgresOperator`
+2. Extract. In this step, a python script wrapped in a Docker container pulls data from the Head-Hunter API and stores it in jsonlines-file. Delay between queries is implemented to avoid getting Captcha
+3. Transform. Here the data is transformed by python script which is also wrapped in a Docker container and stored in temporary tables from step 1
+4. Load. This is a bunch of `PostgresOperator` that insert data from temporary tables into main tables. Duplicates in temporary tables and between temporary tables and main tables are checked
+5. Clean. The last step has `BashOperator` to remove jsonlines-file and two `PostgresOperator` to drop temporary tables
